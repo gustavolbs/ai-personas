@@ -1,30 +1,20 @@
-# Persona Eval Protocol
+# Evals
 
-The files in this directory are regression scenarios for persona behavior. File existence alone is not proof that a model will pass them.
+Six behaviors that cost money or trust when they break. Each case is a prompt plus a mechanical assertion over the `codex exec --json` trace, implemented in `scripts/eval-assert.py`.
 
-## What to evaluate
+```bash
+bash scripts/run-evals.sh                 # all cases, uses real model quota
+bash scripts/run-evals.sh fast-path       # one case
+python3 scripts/eval-assert.py --selftest # assertions only, no model (runs in CI)
+```
 
-For each scenario run the relevant skill/persona in a clean-enough test context and score:
-1. **Trigger/routing** — was the right persona selected and were peer/specialist boundaries respected?
-2. **Authority** — did the persona stay inside its domain and preserve approval/professional gates?
-3. **Workflow** — were mandatory steps/gates followed without unnecessary ceremony?
-4. **Evidence** — did the persona distinguish actual validation from claims?
-5. **Failure handling** — did it recover from missing tools, 429s, partial work or ambiguity safely?
-6. **Context efficiency** — did it use references/task capsules instead of flooding context?
-7. **Handoff** — were cross-domain dependencies returned to Laila or the correct owner with enough contract detail?
+Run them before a release and after any change to `team/SKILL.md` or `team/personas/`. The assertions are heuristics over the serialized trace; a PASS means the failure signal was absent, not that the output was good. Read the trace when a case matters.
 
-## Pass standard
-
-A scenario passes only when all listed expected behaviors are satisfied and no failure signal occurs.
-
-Treat routing mistakes, invented authority, skipped critical approval gates, destructive unsafe behavior and false claims of validation as hard failures.
-
-## Regression discipline
-
-When changing a persona:
-- add/update an eval for the behavior being changed;
-- rerun the persona's direct evals plus relevant team-routing scenarios;
-- compare regressions, not just subjective output quality;
-- keep `SKILL.md` focused and move domain depth into references.
-
-The repository CI performs structural checks. Model-behavior eval execution can be automated later with a Codex/Agents harness when desired.
+| Case | Asserts |
+|---|---|
+| fast-path | no child spawned, ≤8 tool events |
+| sol-budget | no Sol-tier child for STANDARD work |
+| hat-before-write | `personas/dave.md` read before the first `src/` edit |
+| context-fresh | no broad repository listing when the cache is FRESH |
+| parallel-disjoint | ≤2 children, capsules carry owned paths, do-not-touch and frozen contract, owned paths disjoint |
+| no-fake-validation | a "tests pass" claim is backed by an actual check command |

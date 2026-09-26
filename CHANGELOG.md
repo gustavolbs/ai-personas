@@ -2,6 +2,27 @@
 
 All notable changes to AI Personas are documented here.
 
+## [5.0.0] — 2026-09-26
+
+### Breaking: one skill, hats instead of processes
+- the seven persona skills collapse into one installable `team/` skill; Laila is the single entry point;
+- personas are hat files in `team/personas/` read in the same thread on demand; children exist only for disjoint parallel work, an independent read-only review, or one reusable read-only Sol decision;
+- the five shared contracts and the per-persona boilerplate become a 12-rule SKILL.md; nothing is mandatory reading at boot except the context snapshot;
+- `references/` reorganize into `team/lenses/<domain>/`; the seven copies of evidence, memory and orchestration references merge into `lenses/shared/` and SKILL.md;
+- specialist installers, per-persona installers, `sync-shared-contracts.sh`, `PERSONAS.json` and the string-grep static evals are removed.
+
+### Added
+- **Diego**, video scripting, editing and motion design hat, with `lenses/video/` (scripting, production, editing, motion design, packaging and distribution); inspired by the Agency Agents Short-Video Editing Coach, Video Optimization Specialist, Visual Storyteller and Ad Creative Strategist.
+
+### Fixed
+- the project-context cache lives in `--git-common-dir`, so every worktree shares one snapshot instead of rediscovering the repository;
+- freshness no longer depends on the branch name; HEAD, tree fingerprint and summary hash decide;
+- the snapshot cap drops from 12 KiB to 4 KiB;
+- installed references no longer point at repository-root `docs/` files.
+
+### Evals
+- six cases with mechanical assertions over `codex exec --json` traces (`scripts/eval-assert.py`), with a model-free selftest in CI; the 47 narrative scenarios are retired.
+
 ## [4.0.0] — 2026-09-26
 
 ### Breaking orchestration change

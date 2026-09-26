@@ -1,15 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-bash "$ROOT/scripts/sync-shared-contracts.sh" --check
-bash "$ROOT/scripts/audit-personas.sh"
-python3 -m json.tool "$ROOT/PERSONAS.json" >/dev/null
-python3 "$ROOT/scripts/eval-static.py"
-python3 "$ROOT/scripts/test-project-context.py"
-python3 "$ROOT/scripts/audit-context.py"
-for f in "$ROOT"/scripts/*.sh "$ROOT"/scripts/lib/*.sh; do bash -n "$f"; done
-for f in "$ROOT"/skills/*/scripts/*.sh; do [[ -e "$f" ]] && bash -n "$f"; done
-for path in CHANGELOG.md PERSONAS.json docs/ANTI_SLOP.md docs/EXECUTION_MODES.md docs/MODEL_ROUTING.md docs/MUTATION_AUTHORITY.md docs/PROJECT_CONTEXT.md scripts/project-context.py scripts/test-project-context.py scripts/run-evals.sh scripts/eval-static.py evals/model-routing.md evals/mutation-authority.md evals/sol-budget.md evals/team-routing.md; do
-  [[ -f "$ROOT/$path" ]] || { echo "missing required file: $path" >&2; exit 1; }
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; S="$ROOT/team"
+fail(){ echo "validate: $1" >&2; exit 1; }
+[[ ! -f "$ROOT/SKILL.md" ]] || fail "root SKILL.md would shadow team/"
+grep -q '^name: team$' "$S/SKILL.md" || fail "SKILL.md frontmatter name"
+b=$(wc -c < "$S/SKILL.md"); (( b <= 8704 )) || fail "SKILL.md is $b bytes (cap 8704: it loads on every session)"
+for p in dave ashley diego guto clara roberto ana; do
+  f="$S/personas/$p.md"; [[ -f $f ]] || fail "missing $f"
+  b=$(wc -c < "$f"); (( b <= 5120 )) || fail "$f is $b bytes (cap 5120: it loads on every hat switch)"
+  grep -q "personas/$p.md" "$S/SKILL.md" || fail "SKILL.md does not route to $p"
 done
-echo "AI Personas repository validation passed."
+while read -r ref; do [[ -f "$S/$ref" ]] || fail "dangling reference $ref"; done \
+  < <(grep -ohE 'lenses/[a-z]+/[a-z-]+\.md' "$S/SKILL.md" "$S"/personas/*.md | sort -u)
+for f in "$S"/lenses/*/*.md; do
+  [[ $(basename "$(dirname "$f")") == shared ]] && continue
+  grep -q "$(basename "$f")" "$S/SKILL.md" "$S"/personas/*.md "$S"/lenses/*/*.md || fail "orphan lens $f (no persona or lens points to it)"
+done
+! grep -rnE '(^|[^a-z_])docs/[A-Z_]+\.md|references/[a-z]|_shared/' "$S" || fail "installed skill points at repository-root files"
+for f in "$ROOT"/scripts/*.sh "$S"/scripts/*.sh; do bash -n "$f"; done
+python3 -m py_compile "$S/scripts/project-context.py" "$ROOT"/scripts/*.py
+python3 "$ROOT/scripts/test-project-context.py"
+python3 "$ROOT/scripts/eval-assert.py" --selftest
+for c in $(sed -n 's/^CASES_DEFAULT="\(.*\)"/\1/p' "$ROOT/scripts/run-evals.sh"); do [[ -f "$ROOT/evals/cases/$c.md" ]] || fail "eval case file missing: $c"; done
+echo "validate: ok ($(find "$S" -type f | wc -l | tr -d ' ') skill files, SKILL.md $(wc -c < "$S/SKILL.md" | tr -d ' ') B)"

@@ -1,142 +1,78 @@
 # AI Personas
 
-Opinionated, self-contained Codex personas for real work with explicit domain
-ownership, evidence gates and cost-aware model routing.
+One Codex skill, one point of contact. You tell **Laila** the outcome; she wears the hat of the persona that owns the work, in the same thread, and spawns a child only when it buys something a hat cannot: parallel work, an independent review, or a hard decision.
 
-| Persona | Owns | Write authority |
+| Hat | Owns | Writes |
 |---|---|---|
-| **Laila** | cross-functional product/program delivery and coordination | delivery artifacts only; **never programs** |
-| **Roberto** | business strategy, management, operations, sales/customer success | business artifacts only; **never programs** |
-| **Clara** | finance, accounting, FP&A, pricing, tax, treasury, investments | finance artifacts only; **never programs** |
-| **Ana** | marketing, growth, communications, SEO, paid, lifecycle, analytics | marketing artifacts only; **never programs** |
-| **Ashley** | product UX, UI, visual design, brand and creative production | design artifacts; **no production code** |
-| **Dave** | application engineering, architecture, AI apps, testing and Git | **application code/tests/migrations/config** |
-| **Guto** | platform, DevOps, SRE, releases, infrastructure and production | **IaC/CI/CD/ops code and production state** |
-
-## Routing principle
-
-Use the narrowest domain owner that can complete the request. Laila is the
-cross-functional coordinator, **not** a mandatory front door for single-domain
-work and not a coding fallback.
+| **Laila** | scope, requirements, coordination, acceptance, status | delivery docs |
+| **Dave** | application engineering, architecture, AI apps, tests, Git | application code, sole authority |
+| **Guto** | platform, DevOps, SRE, releases, production | IaC, CI/CD, ops config |
+| **Ashley** | product UX, UI, visual design, brand, creative, visual QA | design artifacts, never production code |
+| **Clara** | finance, accounting, FP&A, pricing economics, tax, treasury | finance artifacts |
+| **Roberto** | business strategy, operations, sales, org, governance | business artifacts |
+| **Ana** | marketing, growth, SEO, content, paid, lifecycle, PR | marketing artifacts |
+| **Diego** | video scripting, reels/ads/SaaS demos, editing, motion design | video and motion artifacts, never production code |
 
 ```text
-Fix a React bug                -> Dave
-Redesign a mobile flow         -> Ashley -> Dave for production implementation
-Audit pricing economics        -> Clara
-Diagnose a production deploy   -> Guto
-Plan a GTM experiment          -> Ana
-Choose an operating model      -> Roberto
-Coordinate a product launch    -> Laila -> relevant owners
+Laila, fix the typo in the greeting.                 -> Dave's hat, one check, done
+Dave, why does the build fail on CI?                 -> Dave's hat directly
+Laila, let users split an invoice across 4 cards.    -> Clara contract -> Ashley flow -> Dave code
+                                                        -> independent review -> Ashley visual QA
+Laila, I am in a hurry, parallelize the backend/UI.  -> frozen contract -> 2 children in worktrees
+Diego, a 30s reel announcing the new export feature. -> Diego's hat: beat sheet, edit spec, cover, Ana handoff
 ```
 
-## Model policy — Luna runs, Sol decides
+## Why this shape
 
-Long-lived persona sessions should default to **Luna**.
+A persona is a file, not a process. Reading a hat costs about 800 tokens; a child agent costs a full boot plus a second read of the repository. So the coordinator stays resident on the cheap **Luna** tier, hats cost almost nothing, and money is spent only where judgment must be independent: a read-only reviewer on a different model, or one reusable read-only **Sol** decision packet at a real decision gate. FAST and STANDARD work uses zero Sol. Rationale in [docs/DESIGN.md](docs/DESIGN.md).
 
-- **Luna** handles conversation, project-context checks, routing, dispatch,
-  child lifecycle, status, implementation, validation and normal synthesis.
-- **Sol** is a short, read-only decision advisor for consequential unresolved
-  ambiguity, architecture/root-cause, strategic tradeoffs or high-risk gates.
-- **FAST:** zero Sol.
-- **STANDARD:** zero Sol by default; one reusable advisor only if a real
-  decision gate appears.
-- **HIGH_RISK:** Luna stays resident; one reusable Sol advisor may participate
-  only at consequential decision/review gates.
+## Layout
 
-**Do not run Laila persistently on Sol.** Laila/Luna delegates domain decisions
-to the owning persona, which decides whether its own Sol consultation is needed.
-
-## Mutation policy
-
-Tool access does not equal permission. Laila, Roberto, Clara and Ana never
-program. Ashley does not write production application code. Dave is the sole
-application-programming authority. Guto owns infrastructure/operations writes.
-
-Every installed skill carries the shared model-routing and mutation-authority
-contracts under `references/_shared/`.
+```text
+team/                      the installable skill
+  SKILL.md                 Laila: routing table, modes, child rules, capsule, report format
+  personas/*.md            seven hats, read on demand
+  lenses/<domain>/*.md     domain depth, read only when the task needs it
+  lenses/shared/           evidence states, memory rules
+  templates/docs/          project memory docs (engineering, design, delivery)
+  scripts/project-context.py   repository snapshot cache shared by all worktrees
+  scripts/init-project.sh      creates docs/<domain>/ from the templates
+evals/                     six behaviors with mechanical assertions over Codex traces
+scripts/                   validate, install, run-evals, eval-assert
+docs/                      design rationale, Penpot and pen.dev setup
+```
 
 ## Install
 
-One persona:
-
 ```bash
-npx skills add gustavolbs/ai-personas --skill dave -g -a codex -y
-npx skills add gustavolbs/ai-personas --skill ashley -g -a codex -y
+npx skills add gustavolbs/ai-personas --skill team -g -a codex -y
 ```
 
-Whole team from a clone:
+or from a clone:
 
 ```bash
-git clone https://github.com/gustavolbs/ai-personas.git
-cd ai-personas
-bash scripts/install-all.sh
+bash scripts/install.sh
 ```
 
-Verify installed copies:
+Restart Codex. Say `Laila, <outcome>`. Set `AI_PERSONAS_REMOVE_LEGACY=1` when running the installer to remove the previous seven separate persona skills.
+
+## Project setup (optional)
 
 ```bash
-bash scripts/verify-installed.sh
-bash scripts/doctor.sh
+bash ~/.agents/skills/team/scripts/init-project.sh --context      # snapshot cache in <git-common-dir>/ai-personas
+bash ~/.agents/skills/team/scripts/init-project.sh --engineering  # docs/engineering/ templates
+bash ~/.agents/skills/team/scripts/init-project.sh --all
 ```
 
-## Optional specialists
+The cache never touches the working tree and is shared by every worktree of the repository. `FRESH` means no rediscovery; `STALE` means reconcile the listed delta only.
+
+## Validate and evaluate
 
 ```bash
-bash scripts/install-specialists.sh
-bash scripts/install-dave-specialists.sh
-bash scripts/install-team-specialists.sh
+bash scripts/validate.sh    # structure, size caps, dangling references, cache tests, assertion selftest (CI)
+bash scripts/run-evals.sh   # live: runs six prompts through codex exec and asserts on the traces (uses quota)
 ```
 
-Installers use reviewed immutable pins by default.
+## Third-party
 
-## Project context reuse
-
-A new chat should not rediscover an unchanged repository:
-
-```bash
-python3 scripts/project-context.py show
-```
-
-- `FRESH` → reuse the compact map and open only task-relevant source;
-- `STALE` → reconcile the reported commit/working-tree delta;
-- `NEEDS_CONTEXT` → one proportional discovery, then checkpoint.
-
-The cache lives under Git metadata and requires no deployment. Optional Graphify
-can accelerate multi-hop dependency navigation:
-
-```bash
-bash scripts/install-context-tools.sh
-```
-
-## Project memory
-
-```bash
-bash scripts/init-project.sh --context
-bash scripts/init-project.sh --design
-bash scripts/init-project.sh --engineering
-bash scripts/init-project.sh --delivery
-bash scripts/init-project.sh --all
-```
-
-## Evidence-first behavior
-
-A diff is not runtime proof, a green build is not proof a user flow works, and a
-child saying “done” is not completion evidence.
-
-## Execution modes
-
-- **FAST** — bounded low-risk work, no committee, zero Sol.
-- **STANDARD** — moderate uncertainty/multi-file behavior; Luna by default.
-- **HIGH_RISK** — explicit domain gates; Luna resident, bounded Sol decisions.
-
-## Validation and evals
-
-```bash
-bash scripts/validate.sh
-bash scripts/run-evals.sh
-AI_PERSONAS_RUN_MODEL_EVALS=1 bash scripts/run-evals.sh
-python3 scripts/audit-context.py
-```
-
-The suite remains a set of Codex Agent Skills rather than a second agent
-runtime.
+Optional external skills and tools Ashley and Dave know how to use are listed in [THIRD_PARTY.md](THIRD_PARTY.md). Nothing is installed automatically.

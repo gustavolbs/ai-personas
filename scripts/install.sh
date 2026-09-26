@@ -1,79 +1,18 @@
 #!/usr/bin/env bash
+# Installs the single `team` skill for Codex. Set AI_PERSONAS_REMOVE_LEGACY=1 to also remove the old seven persona skills.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
-echo "Installing Ashley globally for Codex..."
-npx skills add "$ROOT" --skill ashley -g -a codex -y --copy
-
-mkdir -p "$HOME/.ashley"
-
-if [[ ! -f "$HOME/.ashley/PREFERENCES.md" ]]; then
-cat > "$HOME/.ashley/PREFERENCES.md" <<'EOF'
-# Ashley — Global Design Preferences
-
-Store only preferences that genuinely apply across products.
-Include scope, confidence, evidence and exceptions when useful.
-Do not turn one rejected design into a universal law.
-EOF
+bash "$ROOT/scripts/validate.sh"
+DEST="$HOME/.agents/skills/team"
+if ! (command -v npx >/dev/null 2>&1 && npx -y skills add "$ROOT" --skill team -g -a codex -y --copy); then
+  echo "npx skills unavailable; copying directly"; rm -rf "$DEST"; mkdir -p "$(dirname "$DEST")"; cp -R "$ROOT/team" "$DEST"
 fi
-
-if [[ ! -f "$HOME/.ashley/TASTE_PROFILE.md" ]]; then
-cat > "$HOME/.ashley/TASTE_PROFILE.md" <<'EOF'
-# Ashley — Taste Profile
-
-This is a soft creative prior, not a fixed style preset.
-
-## Calibration status
-Uncalibrated
-
-## Preference dimensions
-
-### Typography character
-Unknown
-
-### Density
-Unknown
-
-### Geometry
-Unknown
-
-### Color intensity
-Unknown
-
-### Brand expressiveness
-Unknown
-
-### Editorial ↔ utilitarian
-Unknown
-
-### Motion intensity
-Unknown
-
-### Illustration / imagery character
-Unknown
-
-### Experimentation tolerance
-Unknown
-
-## Evidence log
-Record dated preference signals with project/context and confidence.
-
-## Contradictions / exceptions
-Record contexts where the preference changes.
-EOF
+[[ -f "$DEST/SKILL.md" ]] || { echo "install failed: $DEST/SKILL.md missing" >&2; exit 1; }
+cmp -s "$ROOT/team/SKILL.md" "$DEST/SKILL.md" || echo "warning: installed SKILL.md differs from the repository copy"
+if [[ "${AI_PERSONAS_REMOVE_LEGACY:-0}" == "1" ]]; then
+  for p in ashley dave guto roberto clara ana laila; do rm -rf "$HOME/.agents/skills/$p" "$HOME/.codex/skills/$p"; done
+  echo "removed legacy persona skills"
+else
+  for p in ashley dave guto roberto clara ana laila; do [[ -d "$HOME/.agents/skills/$p" ]] && echo "note: legacy skill still installed: ~/.agents/skills/$p (AI_PERSONAS_REMOVE_LEGACY=1 removes it)"; done
 fi
-
-if [[ ! -f "$HOME/.ashley/HEURISTICS.md" ]]; then
-cat > "$HOME/.ashley/HEURISTICS.md" <<'EOF'
-# Ashley — Learned Design Heuristics
-
-Reusable lessons learned from repeated outcomes.
-State principle, scope, confidence, evidence and exceptions.
-Core Ashley instructions are not edited automatically.
-EOF
-fi
-
-echo
-echo "Ashley installed. Restart Codex and verify with /skills."
-echo "Optional specialists: bash $ROOT/scripts/install-specialists.sh"
-echo "Product repo setup: ~/.agents/skills/ashley/scripts/init-project.sh"
+echo "installed: $DEST. Restart Codex and say: Laila, <outcome>"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import subprocess,tempfile
-ROOT=Path(__file__).resolve().parents[1]; SCRIPT=ROOT/"scripts/project-context.py"
+ROOT=Path(__file__).resolve().parents[1]; SCRIPT=ROOT/"team/scripts/project-context.py"
 def run(a,c,ok=True):
  p=subprocess.run(a,cwd=c,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
  if ok and p.returncode: raise AssertionError(f"{a}\n{p.stdout}\n{p.stderr}")
@@ -19,9 +19,12 @@ with tempfile.TemporaryDirectory() as td:
  run(["python3",str(SCRIPT),"checkpoint"],r); assert run(["python3",str(SCRIPT),"status","--compact"],r).stdout.startswith("FRESH")
  (r/"src/app.ts").write_text("export const value=2;\n"); stale=run(["python3",str(SCRIPT),"status"],r).stdout; assert stale.startswith("STALE") and "src/app.ts" in stale
  run(["python3",str(SCRIPT),"checkpoint"],r); assert run(["python3",str(SCRIPT),"status","--compact"],r).stdout.startswith("FRESH")
- (r/"src/new.ts").write_text("export const created=true;\n"); run(["git","add","src/new.ts"],r); run(["git","commit","-qm","add"],r)
+ (r/"src/new.ts").write_text("export const created=true;\n"); run(["git","add","-A"],r); run(["git","commit","-qm","add"],r)
  stale=run(["python3",str(SCRIPT),"status"],r).stdout; assert stale.startswith("STALE") and "src/new.ts" in stale
  gd=Path(run(["python3",str(SCRIPT),"graph-dir"],r).stdout.strip()); assert gd.parent==p.parent
+ run(["python3",str(SCRIPT),"checkpoint"],r); wt=Path(td)/"wt"; run(["git","worktree","add","-q","-b","wt",str(wt)],r)
+ assert run(["python3",str(SCRIPT),"path"],wt).stdout.strip()==str(p), "worktree must share the repository cache"
+ out=run(["python3",str(SCRIPT),"status"],wt).stdout; assert out.startswith("FRESH"), out
  status=run(["git","status","--porcelain"],r).stdout
  assert "ai-personas" not in status and "graphify-out" not in status, status
 print("Project context cache tests passed.")

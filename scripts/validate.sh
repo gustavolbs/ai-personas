@@ -18,7 +18,7 @@ for f in "$S"/lenses/*/*.md; do
 done
 ! grep -rnE '(^|[^a-z_])docs/[A-Z_]+\.md|references/[a-z]|_shared/' "$S" || fail "installed skill points at repository-root files"
 for f in "$ROOT"/scripts/*.sh "$S"/scripts/*.sh; do bash -n "$f"; done
-python3 -m py_compile "$S/scripts/project-context.py" "$ROOT"/scripts/*.py
+python3 -c 'import ast,sys; [ast.parse(open(f).read(),f) for f in sys.argv[1:]]' "$S/scripts/project-context.py" "$ROOT"/scripts/*.py
 python3 "$ROOT/scripts/test-project-context.py"
 python3 "$ROOT/scripts/eval-assert.py" --selftest
 for c in $(sed -n 's/^CASES_DEFAULT="\(.*\)"/\1/p' "$ROOT/scripts/run-evals.sh"); do [[ -f "$ROOT/evals/cases/$c.md" ]] || fail "eval case file missing: $c"; done

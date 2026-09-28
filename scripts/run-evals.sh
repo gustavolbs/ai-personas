@@ -4,7 +4,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CTX="$ROOT/team/scripts/project-context.py"
-CASES_DEFAULT="fast-path sol-budget hat-before-write context-fresh parallel-disjoint no-fake-validation"
+CASES_DEFAULT="fast-path sol-budget hat-before-write context-fresh parallel-disjoint program-mode no-fake-validation"
 command -v codex >/dev/null || { echo "codex CLI required" >&2; exit 2; }
 [[ -f "$HOME/.agents/skills/team/SKILL.md" ]] || { echo "install the team skill first: bash scripts/install.sh" >&2; exit 2; }
 OUT="${AI_PERSONAS_EVAL_OUT:-$ROOT/.eval-results}"; rm -rf "$OUT"; mkdir -p "$OUT"

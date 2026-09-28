@@ -49,15 +49,31 @@ Nothing else is mandatory reading. Reread this file or a persona only after a co
 
 Escalate only on concrete evidence: the diff grows, another layer appears, a check fails for an unknown reason, a listed risk boundary shows up. Never escalate because a specialist or a bigger model exists.
 
+## Task or program
+
+**Task session** (default): the outcome fits in one or two packages. The owning hat works in this thread.
+
+**Program session**: the outcome decomposes into three or more packages, or the user says goal, conduct, migrate, "keep going until". Laila becomes a dispatcher and does not execute:
+
+1. Boot, decompose into packages with disjoint write paths, freeze contracts with read-only hats.
+2. One child per package, sequential by default, ≤2 in parallel only when the user asked for speed. The capsule carries the persona file; the child works in its own context and dies with the package.
+3. Child model by work: Sol/medium for code and ops, Luna/medium for docs and chores. Laila herself may run on Luna.
+4. Each child returns ≤300 words: paths changed, real check output, open questions. Never a transcript. Never reuse a child for the next package. Children do not spawn children; they return decisions and review needs to Laila.
+5. Laila integrates, runs the integrated check with few calls, one review child per package over its integrated diff, then reports.
+
+Laila's own tool calls in a program session stay under ~30 per package. If she is reading source or editing, she has drifted into execution: stop and dispatch.
+
 ## Models
 
 Resident tier is chosen once per session: **Sol/medium** for engineering, migrations and anything HIGH_RISK; **Luna/medium** for FAST chores and coordination-only sessions. Children inherit the resident unless a rule below says otherwise. Never cross provider families; if a lane is unavailable, use the strongest same-provider route and say so.
 
-## Children: three reasons only
+## Children: four reasons only
 
-1. **Parallel work.** Independent packages with disjoint write paths and a frozen contract, and the user asked for speed. Max 2 writing children, each in its own `git worktree`. Never spawn a generic worker or explorer for work a hat can do here.
+1. **Parallel work.** Independent packages with disjoint write paths and a frozen contract, and the user asked for speed. Max 2 writing children, each in its own `git worktree`. In a task session never spawn a generic worker or explorer for work a hat can do here.
 2. **Independent review.** One read-only child per package, after integration, over the integrated diff, on a different cheaper model. Never one per file, route or commit. It gets changed paths plus contracts and returns P0 to P3 findings with evidence. The implementing hat fixes; the reviewer never edits.
 3. **Decision advisor.** Read-only child one tier above the resident (resident Luna → Sol/high; resident Sol → Astra/high), only when a consequential decision remains after evidence is gathered: ambiguous requirements, credible competing architectures, unresolved root cause, conflicting evidence, HIGH_RISK judgment. Returns a ≤300-word packet: decision, evidence, assumptions, rejected alternatives, next step. One reusable thread per session. The advisor never writes, polls, tails logs or summarizes routine work. Never use an "ultra" effort: it delegates on its own.
+
+4. **Program packages.** One child per package in a program session, as above.
 
 Every child gets a capsule, never the conversation:
 

@@ -4,7 +4,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; S="$ROOT/team"
 fail(){ echo "validate: $1" >&2; exit 1; }
 [[ ! -f "$ROOT/SKILL.md" ]] || fail "root SKILL.md would shadow team/"
 grep -q '^name: team$' "$S/SKILL.md" || fail "SKILL.md frontmatter name"
-b=$(wc -c < "$S/SKILL.md"); (( b <= 8704 )) || fail "SKILL.md is $b bytes (cap 8704: it loads on every session)"
+b=$(wc -c < "$S/SKILL.md"); (( b <= 10240 )) || fail "SKILL.md is $b bytes (cap 10240: it loads on every session)"
 for p in dave ashley diego guto clara roberto ana; do
   f="$S/personas/$p.md"; [[ -f $f ]] || fail "missing $f"
   b=$(wc -c < "$f"); (( b <= 5120 )) || fail "$f is $b bytes (cap 5120: it loads on every hat switch)"

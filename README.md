@@ -37,7 +37,7 @@ team/                      the installable skill
   templates/docs/          project memory docs (engineering, design, delivery)
   scripts/project-context.py   repository snapshot cache shared by all worktrees
   scripts/init-project.sh      creates docs/<domain>/ from the templates
-evals/                     six behaviors with mechanical assertions over Codex traces
+evals/                     seven behaviors with mechanical assertions over Codex traces
 scripts/                   validate, install, run-evals, eval-assert
 docs/                      design rationale, Penpot and pen.dev setup
 ```
@@ -70,7 +70,7 @@ The cache never touches the working tree and is shared by every worktree of the 
 
 ```bash
 bash scripts/validate.sh    # structure, size caps, dangling references, cache tests, assertion selftest (CI)
-bash scripts/run-evals.sh   # live: runs six prompts through codex exec and asserts on the traces (uses quota)
+bash scripts/run-evals.sh   # live: runs seven prompts through codex exec and asserts on the traces (uses quota)
 ```
 
 ## Third-party

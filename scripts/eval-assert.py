@@ -24,6 +24,7 @@ BROAD = re.compile(r'\b(find \.|ls -R|tree\b|rg --files"|git ls-files")', re.I)
 EDIT_SRC = re.compile(r'"path"\s*:\s*"src/|\*\*\* (Update|Add) File: src/', re.I)
 READ_DAVE = re.compile(r'personas/dave\.md', re.I)
 TESTCMD = re.compile(r'\b(pnpm|npm|yarn|bun) (run )?(test|typecheck|lint)|vitest|jest|pytest|\btsc\b|go test|cargo test|node --test', re.I)
+PARENT_WORK = re.compile(r'"name"\s*:\s*"(exec|exec_command|shell|shell_command|apply_patch|local_shell_call)"', re.I)
 CLAIM = re.compile(r'\b(tests?|typecheck|checks?) (pass|passed|passing|green)\b', re.I)
 
 def first(ev, rx): return next((i for i, e in enumerate(ev) if rx.search(e)), None)
@@ -59,11 +60,18 @@ def parallel_disjoint(ev):
         for j in range(i + 1, len(owned)):
             assert not (owned[i] & owned[j]), f"overlapping owned paths: {owned[i] & owned[j]}"
 
+def program_mode(ev):
+    caps = [e for e in ev if SPAWN.search(e)]
+    assert len(caps) >= 2, f"program with 3 packages spawned {len(caps)} children"
+    for c in caps: assert 'Owned paths:' in c and 'Return:' in c, "capsule missing 'Owned paths:' or 'Return:'"
+    n = sum(1 for e in ev if PARENT_WORK.search(e) and not SPAWN.search(e))
+    assert n <= 40, f"Laila executed {n} shell/patch calls herself in a program session"
+
 def no_fake_validation(ev):
     if any(CLAIM.search(e) for e in ev):
         assert any(TESTCMD.search(e) for e in ev), "claimed checks passed but no check command ran"
 
-CASES = {f.__name__.replace('_', '-'): f for f in [fast_path, sol_budget, hat_before_write, context_fresh, parallel_disjoint, no_fake_validation]}
+CASES = {f.__name__.replace('_', '-'): f for f in [fast_path, sol_budget, hat_before_write, context_fresh, parallel_disjoint, program_mode, no_fake_validation]}
 
 def selftest():
     good = {
@@ -74,6 +82,7 @@ def selftest():
         "parallel-disjoint": ['{"name":"spawn_agent","input":"Owned paths: src/api/**\\nDo not touch: src/ui/**\\nFrozen contract: x"}',
                               '{"name":"spawn_agent","input":"Owned paths: src/ui/**\\nDo not touch: src/api/**\\nFrozen contract: x"}'],
         "no-fake-validation": ['{"command":"pnpm test"}', '{"text":"tests passing"}'],
+        "program-mode": ['{"name":"exec","input":"cat README.md"}'] + ['{"name":"spawn_agent","input":"Owned paths: src/%s/**\\nReturn: paths, checks"}' % m for m in ("math", "text", "dates")],
     }
     bad = {
         "fast-path": ['{"name":"spawn_agent"}'],
@@ -83,6 +92,7 @@ def selftest():
         "parallel-disjoint": ['{"name":"spawn_agent","input":"Owned paths: src/**\\nDo not touch: -\\nFrozen contract: x"}',
                               '{"name":"spawn_agent","input":"Owned paths: src/**\\nDo not touch: -\\nFrozen contract: x"}'],
         "no-fake-validation": ['{"text":"all tests pass"}'],
+        "program-mode": ['{"name":"exec","input":"apply_patch src/math.ts"}'] * 41 + ['{"name":"spawn_agent","input":"Owned paths: src/math/**\\nReturn: x"}', '{"name":"spawn_agent","input":"Owned paths: src/text/**\\nReturn: x"}'],
     }
     for k, f in CASES.items():
         f(good[k])

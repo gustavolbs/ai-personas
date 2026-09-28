@@ -16,7 +16,9 @@ def events(path):
     return out
 
 SPAWN = re.compile(r'spawn_agent', re.I)
-SOL = re.compile(r'"model"\s*:\s*"[^"]*sol[^"]*"', re.I)
+TIER = {'luna': 0, 'sol': 1, 'astra': 2}
+MODEL = re.compile(r'"model"\s*:\s*"[^"]*(luna|sol|astra)[^"]*"', re.I)
+RESIDENT = re.compile(r'turn_context.*?"model"\s*:\s*"[^"]*(luna|sol|astra)', re.I)
 TOOL = re.compile(r'"type"\s*:\s*"(function_call|tool_call|local_shell_call|custom_tool_call|mcp_tool_call)"|"item_type"\s*:\s*"(command_execution|file_change|mcp_tool_call)"', re.I)
 BROAD = re.compile(r'\b(find \.|ls -R|tree\b|rg --files"|git ls-files")', re.I)
 EDIT_SRC = re.compile(r'"path"\s*:\s*"src/|\*\*\* (Update|Add) File: src/', re.I)
@@ -31,7 +33,12 @@ def fast_path(ev):
     n = sum(1 for e in ev if TOOL.search(e)); assert n <= 8, f"FAST used {n} tool events (>8 including boot)"
 
 def sol_budget(ev):
-    assert not any(SOL.search(e) for e in ev), "STANDARD used a Sol-tier child"
+    """No child above the resident tier for STANDARD work (advisor budget is zero)."""
+    r = next((m.group(1).lower() for e in ev for m in [RESIDENT.search(e)] if m), 'luna')
+    for e in ev:
+        if SPAWN.search(e):
+            m = MODEL.search(e)
+            if m: assert TIER[m.group(1).lower()] <= TIER[r], f"STANDARD spawned a {m.group(1)} child above the {r} resident"
 
 def hat_before_write(ev):
     w, r = first(ev, EDIT_SRC), first(ev, READ_DAVE)
@@ -61,7 +68,7 @@ CASES = {f.__name__.replace('_', '-'): f for f in [fast_path, sol_budget, hat_be
 def selftest():
     good = {
         "fast-path": ['{"type":"function_call","command":"cat README.md"}'],
-        "sol-budget": ['{"name":"spawn_agent","model":"gpt-6-luna"}'],
+        "sol-budget": ['{"type":"turn_context","model":"gpt-6-sol"}', '{"name":"spawn_agent","model":"gpt-6-sol"}'],
         "hat-before-write": ['{"command":"cat personas/dave.md"}', '{"name":"apply_patch","path":"src/a.ts"}'],
         "context-fresh": ['{"command":"cat src/app.ts"}'],
         "parallel-disjoint": ['{"name":"spawn_agent","input":"Owned paths: src/api/**\\nDo not touch: src/ui/**\\nFrozen contract: x"}',
@@ -70,7 +77,7 @@ def selftest():
     }
     bad = {
         "fast-path": ['{"name":"spawn_agent"}'],
-        "sol-budget": ['{"name":"spawn_agent","model":"routemux/openai/gpt-6-sol"}'],
+        "sol-budget": ['{"type":"turn_context","model":"gpt-6-luna"}', '{"name":"spawn_agent","model":"routemux/openai/gpt-6-sol"}'],
         "hat-before-write": ['{"name":"apply_patch","path":"src/a.ts"}', '{"command":"cat personas/dave.md"}'],
         "context-fresh": ['{"command":"find . -type f"}'],
         "parallel-disjoint": ['{"name":"spawn_agent","input":"Owned paths: src/**\\nDo not touch: -\\nFrozen contract: x"}',

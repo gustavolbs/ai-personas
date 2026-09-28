@@ -13,7 +13,7 @@ Run them before a release and after any change to `team/SKILL.md` or `team/perso
 | Case | Asserts |
 |---|---|
 | fast-path | no child spawned, ≤8 tool events |
-| sol-budget | no Sol-tier child for STANDARD work |
+| sol-budget | no child above the resident tier for STANDARD work |
 | hat-before-write | `personas/dave.md` read before the first `src/` edit |
 | context-fresh | no broad repository listing when the cache is FRESH |
 | parallel-disjoint | ≤2 children, capsules carry owned paths, do-not-touch and frozen contract, owned paths disjoint |

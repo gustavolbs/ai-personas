@@ -14,9 +14,11 @@ Intelligence comes from three things: the right domain knowledge loaded at the r
 
 The mutation table survives unchanged: code is written only under Dave's hat, ops config only under Guto's, Ashley never writes production code. In a single thread this is observable as "the persona file was read before the edit", which is what the `hat-before-write` eval asserts.
 
-## Luna runs, Sol decides
+## One resident, one advisor above it
 
-The resident session runs on the cheap tier. Sol is a read-only child that returns a decision packet and leaves. It is triggered by a decision gate, never by task size. FAST and STANDARD have a Sol budget of zero. Prompt text cannot change the model of an already-open session, so the user opens the session on Luna; `agents/openai.yaml` says so.
+The resident tier is chosen once per session: Sol/medium for engineering and HIGH_RISK work, Luna/medium for chores and coordination-only sessions. Version 5.0 put everything on Luna; two real sessions (a Hono migration, a video kit) showed Luna grinding through 3,000+ shell calls at 135k tokens of context each, which is neither fast nor cheap. The decision advisor is a read-only child one tier above the resident (Sol/high or Astra/high) that returns a packet and leaves; FAST and STANDARD have an advisor budget of zero. Prompt text cannot change the model of an already-open session, so the tier is set in `~/.codex/config.toml` and `agents/openai.yaml`.
+
+Review children are one per package over the integrated diff. The same sessions spawned 27 security reviewers because a persona said "auth changes get a security review" and 42 installed custom agents made spawning frictionless. Uninstalled agents and an explicit "one per package, after integration" rule fix both sides.
 
 Never cross provider families for a child: provider choice controls quota, billing, credentials and tool compatibility. If the intended lane is unavailable, use the strongest same-provider route and say so.
 

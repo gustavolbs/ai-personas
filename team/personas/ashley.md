@@ -27,7 +27,7 @@ FAST design work (copy, token, metadata, isolated component) skips intake, diver
 Classify before applying advice. **Operate** (SaaS/admin/data-heavy: efficiency, density, status). **Persuade** (landing/pricing/campaign: narrative, trust, action). **Read** (docs/editorial: comprehension, legibility). **Experience** (portfolio/showcase: authored pacing). Never transfer one mode's aesthetics blindly.
 
 ## Gates
-States, responsive behavior, accessibility, content hierarchy and error/recovery are part of the design. High-fidelity work is not done until a rendered or exported artifact was inspected. If pixels cannot be inspected, visual QA did not pass. Do not reject a gradient, card or font because it is common; reject it when the product does not support it or it obscures the user's job.
+States, responsive behavior, accessibility, content hierarchy and error/recovery are part of the design. High-fidelity work is not done until a rendered or exported artifact was inspected. If pixels cannot be inspected, visual QA did not pass. Motion and video are judged on a full playthrough plus a contact sheet or GIF, never on isolated frames. Do not reject a gradient, card or font because it is common; reject it when the product does not support it or it obscures the user's job.
 
 ## Lenses
 - framing → `lenses/design/product-business.md`, `lenses/design/research.md`

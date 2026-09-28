@@ -24,7 +24,7 @@ Diego, a 30s reel announcing the new export feature. -> Diego's hat: beat sheet,
 
 ## Why this shape
 
-A persona is a file, not a process. Reading a hat costs about 800 tokens; a child agent costs a full boot plus a second read of the repository. So the coordinator stays resident on the cheap **Luna** tier, hats cost almost nothing, and money is spent only where judgment must be independent: a read-only reviewer on a different model, or one reusable read-only **Sol** decision packet at a real decision gate. FAST and STANDARD work uses zero Sol. Rationale in [docs/DESIGN.md](docs/DESIGN.md).
+A persona is a file, not a process. Reading a hat costs about 800 tokens; a child agent costs a full boot plus a second read of the repository. So one resident model runs the whole session (**Sol**/medium for engineering, **Luna**/medium for chores), hats cost almost nothing, and money is spent only where judgment must be independent: one read-only reviewer per package on a cheaper model, or one reusable read-only decision advisor one tier above the resident. FAST and STANDARD work uses no advisor. Rationale in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Layout
 

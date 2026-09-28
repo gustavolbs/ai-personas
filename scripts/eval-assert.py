@@ -50,7 +50,7 @@ def context_fresh(ev):
 
 def parallel_disjoint(ev):
     caps = [e for e in ev if SPAWN.search(e)]
-    assert len(caps) <= 2, f"{len(caps)} children spawned (>2)"
+    assert caps, "user asked for speed but no child was spawned"
     owned = []
     for c in caps:
         m = re.search(r'Owned paths:\s*(.+?)(\\n|$)', c); assert m, "capsule without 'Owned paths:'"
